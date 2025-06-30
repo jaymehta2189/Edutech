@@ -1,0 +1,6 @@
+# docker-compose.yml
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6380:6379"
