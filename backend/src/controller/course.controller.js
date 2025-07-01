@@ -106,17 +106,15 @@ export const addContentToCourse = asynchandler(async (req, res) => {
   const { title, type, text } = req.body;
   console.log("Adding content to course:", courseId, "with type:", type);
   
-//   const course = await Course.findById(courseId);
 const course = await Course.findById(courseId);
+console.log("Course fetched from DB:", course);
   if (!course) throw new ApiError(404, "Course not found");
-    console.log("m cache:", req.file.location);
-    console.log("asd",req.file.path);
-    console.log("S",req.file);
+
   const content = {
     title,
     type,
     text: type === "text" ? text : undefined,
-    url: type !== "text" ? req.file.path : undefined, // if uploaded to S3/Cloudinary
+    url: type !== "text" ? req.file.path : undefined,
   };
     console.log("Content to be added:", content);
 

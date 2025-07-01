@@ -49,7 +49,7 @@ const courseSchema = new mongoose.Schema({
         required: true
       },
       url: String, // S3, Cloudinary, etc.
-      text: String, // For plain text
+    //   text: String, // For plain text
       uploadedAt: { type: Date, default: Date.now },
     }
   ]

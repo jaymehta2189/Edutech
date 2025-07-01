@@ -11,8 +11,8 @@ export const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'course_content',
+    resource_type: 'auto',
     allowed_formats: ['jpg', 'png', 'pdf', 'mp4', 'mov'],
-    resource_type: 'auto'
   },
 });
 

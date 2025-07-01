@@ -141,19 +141,17 @@
 // };
 
 // export default MyCourses;
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import api from '../utils/api'; // Adjust the import path as necessary
 import { 
   BookOpen, 
   Clock, 
   Calendar, 
   User,
   Play,
-  CheckCircle,
-  FileText
+  Video
 } from 'lucide-react';
 
 const MyCourses = () => {
@@ -169,7 +167,7 @@ const MyCourses = () => {
 
   const fetchMyCourses = async () => {
     try {
-      const response = await api.get(`/api/courses/user/${user._id}`);
+    const response = await api.get(`/api/courses/user/${user._id}`);
       setCourses(response.data);
     } catch (error) {
       console.error('Error fetching my courses:', error);
@@ -224,21 +222,12 @@ const MyCourses = () => {
                       {course.category}
                     </span>
                   </div>
-                  <div className="absolute bottom-4 left-4">
-                    <div className="bg-white bg-opacity-90 rounded-lg px-3 py-2">
-                      <div className="text-xs text-gray-600 mb-1">Progress</div>
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: '65%' }}></div>
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">65% Complete</div>
-                    </div>
-                  </div>
                   <div className="absolute bottom-4 right-4">
                     <div className="bg-white bg-opacity-90 rounded-lg px-3 py-2">
-                      <div className="text-xs text-gray-600 mb-1">Content</div>
+                      <div className="text-xs text-gray-600 mb-1">Videos</div>
                       <div className="text-sm font-semibold text-gray-900 flex items-center">
-                        <FileText className="h-3 w-3 mr-1" />
-                        {course.content?.length || 0} lessons
+                        <Video className="h-3 w-3 mr-1" />
+                        {course.content?.length || 0} videos
                       </div>
                     </div>
                   </div>
@@ -276,7 +265,7 @@ const MyCourses = () => {
                       className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors text-center flex items-center justify-center space-x-2"
                     >
                       <Play className="h-4 w-4" />
-                      <span>Continue Learning</span>
+                      <span>Watch Videos</span>
                     </Link>
                     <Link
                       to={`/courses/${course._id}`}

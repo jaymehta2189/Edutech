@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 import api from '../utils/api'; // Adjust the import path as necessary
 import { 
   Clock, 
@@ -249,7 +248,7 @@ const CourseDetail = () => {
                     <div className="bg-green-100 text-green-800 px-4 py-3 rounded-lg mb-4">
                       ✓ You are enrolled in this course
                     </div>
-                    <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <button onClick={()=>{navigate(`/course-viewer/${id}`)}} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                       Continue Learning
                     </button>
                   </div>
