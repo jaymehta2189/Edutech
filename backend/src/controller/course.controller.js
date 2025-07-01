@@ -97,30 +97,49 @@ export const getCoursesByInstructorId = asynchandler(async (req, res) => {
     const instructorCourses = courses.filter(course =>
         course.instructor == instructorId || course.instructor._id === instructorId
     );
-
+    console.log("Instructor courses fetched from cache:", instructorCourses);
     res.json(instructorCourses);
 });
 
 export const addContentToCourse = asynchandler(async (req, res) => {
   const { courseId } = req.params;
   const { title, type, text } = req.body;
+  console.log("Adding content to course:", courseId, "with type:", type);
   
 //   const course = await Course.findById(courseId);
-    const course = await cacheData.getCachedCourse("$", courseId);
+const course = await Course.findById(courseId);
   if (!course) throw new ApiError(404, "Course not found");
-
+    console.log("m cache:", req.file.location);
+    console.log("asd",req.file.path);
+    console.log("S",req.file);
   const content = {
     title,
     type,
     text: type === "text" ? text : undefined,
-    url: type !== "text" ? req.file.location : undefined, // if uploaded to S3/Cloudinary
+    url: type !== "text" ? req.file.path : undefined, // if uploaded to S3/Cloudinary
   };
+    console.log("Content to be added:", content);
 
   course.content.push(content);
+    console.log("Updated course content:", course.content);
+    
+        // Save the updated course
+        // await course.save();
+        // Update cache
+        console.log("Saving course to DB and cache...");
   await course.save();
 
+    await RedisClient.call("JSON.SET", `course:${courseId}`, "$", JSON.stringify(course));
   res.json({ message: "Content uploaded successfully", content });
 });
 
+export const getCourseContent = asynchandler(async (req, res) => {
+  const { courseId } = req.params;
 
+  const course = await cacheData.getCachedCourse("$", courseId);
+  if (!course) throw new ApiError(404, "Course not found");
+
+
+  res.json(course.content);
+});
 

@@ -10,5 +10,7 @@ router.get('/all', courseController.getAllCourses);                             
 router.get('/current', courseController.getCurrentCourses);                       // Get current courses
 router.post('/enroll/:courseId', auth, courseController.enrollInCourse);            // Enroll in course
 router.get('/user/:userId', auth, courseController.getCoursesByUserId);                 // Get courses by userId
+router.get(`/instructor/:userId`, auth,isInstructor, courseController.getCoursesByInstructorId); // Get courses by userId
 router.post('/:courseId/content', auth, isInstructor,upload.single("file"), courseController.addContentToCourse); // Add content to course
+router.get('/:courseId/content', auth,courseController.getCourseContent); // Get course content
 export default router;

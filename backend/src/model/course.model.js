@@ -39,7 +39,20 @@ const courseSchema = new mongoose.Schema({
     endDate: {
         type: Date,
         required: true
+    },
+    content: [
+    {
+      title: String,
+      type: {
+        type: String, // "video", "pdf", "text"
+        enum: ['video', 'pdf', 'text'],
+        required: true
+      },
+      url: String, // S3, Cloudinary, etc.
+      text: String, // For plain text
+      uploadedAt: { type: Date, default: Date.now },
     }
+  ]
 }, { timestamps: true });
 
 const Course = mongoose.model("Course", courseSchema);
