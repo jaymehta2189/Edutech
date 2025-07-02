@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api'; // Adjust the import path as necessary
+import PaymentModal from '../components/PaymentModal';
+import api from '../utils/api'; // Adjust the import based on your API setup
 import { 
   Clock, 
   DollarSign, 
@@ -12,7 +13,9 @@ import {
   User,
   MessageCircle,
   Send,
-  ArrowLeft
+  ArrowLeft,
+  CreditCard,
+  ShoppingCart
 } from 'lucide-react';
 
 const CourseDetail = () => {
@@ -21,7 +24,7 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [question, setQuestion] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [askingAI, setAskingAI] = useState(false);
@@ -32,8 +35,6 @@ const CourseDetail = () => {
 
   const fetchCourse = async () => {
     try {
-      // Since your backend doesn't have a single course endpoint, 
-      // we'll fetch all courses and find the one we need
       const response = await api.get('/api/courses/all');
       const foundCourse = response.data.find(c => c._id === id);
       setCourse(foundCourse);
@@ -44,21 +45,29 @@ const CourseDetail = () => {
     }
   };
 
-  const handleEnroll = async () => {
+  const handleEnrollFree = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
 
-    setEnrolling(true);
     try {
       await api.post(`/api/courses/enroll/${id}`);
       alert('Successfully enrolled in the course!');
-      fetchCourse(); // Refresh course data
+      fetchCourse();
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to enroll in course');
-    } finally {
-      setEnrolling(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      await api.post(`/api/courses/enroll/${id}`);
+      alert('Payment successful! You are now enrolled in the course.');
+      fetchCourse();
+    } catch (error) {
+      console.error('Error enrolling after payment:', error);
+      alert('Payment successful but enrollment failed. Please contact support.');
     }
   };
 
@@ -102,6 +111,7 @@ const CourseDetail = () => {
   }
 
   const isEnrolled = course.students?.includes(user?._id);
+  const isFree = course.price === 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -136,6 +146,13 @@ const CourseDetail = () => {
                     <span className="text-sm text-gray-700 font-medium">4.8</span>
                   </div>
                 </div>
+                {isFree && (
+                  <div className="absolute bottom-6 left-6">
+                    <span className="bg-green-500 text-white text-sm font-medium px-3 py-1 rounded">
+                      FREE COURSE
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="p-8">
@@ -236,10 +253,18 @@ const CourseDetail = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  ₹{course.price}
-                </div>
-                <p className="text-gray-600">One-time payment</p>
+                {isFree ? (
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    FREE
+                  </div>
+                ) : (
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    ₹{course.price}
+                  </div>
+                )}
+                <p className="text-gray-600">
+                  {isFree ? 'Free course' : 'One-time payment'}
+                </p>
               </div>
 
               {user ? (
@@ -248,18 +273,33 @@ const CourseDetail = () => {
                     <div className="bg-green-100 text-green-800 px-4 py-3 rounded-lg mb-4">
                       ✓ You are enrolled in this course
                     </div>
-                    <button onClick={()=>{navigate(`/course-viewer/${id}`)}} className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <button 
+                      onClick={() => navigate(`/course-viewer/${course._id}`)}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    >
                       Continue Learning
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrolling}
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {enrolling ? 'Enrolling...' : 'Enroll Now'}
-                  </button>
+                  <div className="space-y-4">
+                    {isFree ? (
+                      <button
+                        onClick={handleEnrollFree}
+                        className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <BookOpen className="h-5 w-5" />
+                        <span>Enroll for Free</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowPaymentModal(true)}
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span>Buy Now</span>
+                      </button>
+                    )}
+                  </div>
                 )
               ) : (
                 <button
@@ -291,10 +331,27 @@ const CourseDetail = () => {
                   </li>
                 </ul>
               </div>
+
+              {!isFree && (
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2 text-yellow-800">
+                    <ShoppingCart className="h-4 w-4" />
+                    <span className="text-sm font-medium">30-day money-back guarantee</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        course={course}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

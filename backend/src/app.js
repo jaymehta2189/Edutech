@@ -10,7 +10,11 @@ app.use(cors(
         credentials: true, // Allow credentials (cookies, authorization headers, etc.)
     }
 ));
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/payment/webhook') return next()
+  express.json()(req, res, next)
+})
+
 // app.use(express.urlencoded({ extended: false }));
 
 const Limiter = rateLimit({
@@ -25,7 +29,7 @@ import adminRoutes from "./routes/admin.route.js";
 import courseRoutes from "./routes/course.route.js";
 import aiRoutes from "./routes/ai.route.js";
 import ApiError from "./util/ApiError.js";
-
+import paymentroute from "./routes/payment.route.js";
 
 import *as cacheConfig from "./service/cachedata.js";
 import RedisClient from "./service/redisconfig.js";
@@ -53,6 +57,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/payment", paymentroute);
+
 
 app.use((err,req, res, next) => {
     if(err instanceof ApiError) {

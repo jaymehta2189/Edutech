@@ -37,19 +37,19 @@ export const enrollInCourse = asynchandler(async (req, res) => {
     const userId = req.user._id;
 
     const course = await cacheData.getCachedCourse( "$", courseId);
-    console.log("Course fetched from cache:", course);
+    // console.log("Course fetched from cache:", course);
     if (!course) throw new ApiError(404, "Course not found");
 
     if (course.students.map(String).includes(String(userId))) {
         return res.status(400).json({ message: "Already enrolled in this course" });
     }
-    console.log("Enrolling user:", userId, "in course:", courseId);
+    // console.log("Enrolling user:", userId, "in course:", courseId);
     const updatedCourse = await Course.findByIdAndUpdate(
         courseId,
         { $push: { students: userId } },
         { new: true }
     );
-    console.log("Updated course after enrollment:", updatedCourse);
+    // console.log("Updated course after enrollment:", updatedCourse);
 
     if (!updatedCourse) throw new ApiError(500, "Failed to enroll in course");
 
@@ -64,9 +64,9 @@ export const getCoursesByUserId = asynchandler(async (req, res) => {
 
     let courses;
     try {
-        console.log("Fetching courses from cache for user:", userId);
+        // console.log("Fetching courses from cache for user:", userId);
         courses = await cacheData.getAllCachedCourses();
-        console.log("Courses fetched from cache:", courses);
+        // console.log("Courses fetched from cache:", courses);
     } catch (err) {
         console.warn("Fallback to DB: ", err.message);
         courses = await Course.find({ students: userId }).populate("instructor", "name email");
@@ -77,7 +77,7 @@ export const getCoursesByUserId = asynchandler(async (req, res) => {
     const filteredCourses = courses.filter(course =>
         course.students && course.students.includes(userId)
     );
-    console.log("fil",filteredCourses);
+    // console.log("fil",filteredCourses);
 
     res.json(filteredCourses);
 });
@@ -97,17 +97,17 @@ export const getCoursesByInstructorId = asynchandler(async (req, res) => {
     const instructorCourses = courses.filter(course =>
         course.instructor == instructorId || course.instructor._id === instructorId
     );
-    console.log("Instructor courses fetched from cache:", instructorCourses);
+    // console.log("Instructor courses fetched from cache:", instructorCourses);
     res.json(instructorCourses);
 });
 
 export const addContentToCourse = asynchandler(async (req, res) => {
   const { courseId } = req.params;
   const { title, type, text } = req.body;
-  console.log("Adding content to course:", courseId, "with type:", type);
+//   console.log("Adding content to course:", courseId, "with type:", type);
   
 const course = await Course.findById(courseId);
-console.log("Course fetched from DB:", course);
+// console.log("Course fetched from DB:", course);
   if (!course) throw new ApiError(404, "Course not found");
 
   const content = {
@@ -116,15 +116,15 @@ console.log("Course fetched from DB:", course);
     text: type === "text" ? text : undefined,
     url: type !== "text" ? req.file.path : undefined,
   };
-    console.log("Content to be added:", content);
+    // console.log("Content to be added:", content);
 
   course.content.push(content);
-    console.log("Updated course content:", course.content);
+    // console.log("Updated course content:", course.content);
     
         // Save the updated course
         // await course.save();
         // Update cache
-        console.log("Saving course to DB and cache...");
+        // console.log("Saving course to DB and cache...");
   await course.save();
 
     await RedisClient.call("JSON.SET", `course:${courseId}`, "$", JSON.stringify(course));
