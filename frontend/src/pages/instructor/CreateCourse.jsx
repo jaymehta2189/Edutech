@@ -42,6 +42,7 @@ const CreateCourse = () => {
   ];
 
   const handleChange = (e) => {
+    console.log("user",user);
     setFormData({
       ...formData,
       [e.target.name]: e.target.value

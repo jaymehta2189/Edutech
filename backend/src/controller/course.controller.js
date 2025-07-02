@@ -43,6 +43,9 @@ export const enrollInCourse = asynchandler(async (req, res) => {
     if (course.students.map(String).includes(String(userId))) {
         return res.status(400).json({ message: "Already enrolled in this course" });
     }
+    if(course.instructor.toString() === userId.toString()) {
+        return res.status(400).json({ message: "You cannot enroll in your own course" });
+    }
     // console.log("Enrolling user:", userId, "in course:", courseId);
     const updatedCourse = await Course.findByIdAndUpdate(
         courseId,

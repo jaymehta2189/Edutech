@@ -27,9 +27,10 @@ export const createPaymentIntent = asynchandler(async (req, res) => {
 });
 
 export const handleWebhook = asynchandler(async (req, res) => {
+    // console.log('Received webhook request:', req.body);
     const sig = req.headers['stripe-signature'];
     let event;
-
+    // console.log('Received webhook event:', req.body);
     try {
         event = stripeClient.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {

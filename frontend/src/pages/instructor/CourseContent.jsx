@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../utils/api'; // Adjust the import path as necessary
+import api from '../../utils/api'; // Adjust the import based on your API setup
+import toast from 'react-hot-toast';
 import { 
   ArrowLeft, 
   Plus, 
@@ -10,7 +11,10 @@ import {
   Trash2,
   Edit,
   Calendar,
-  Eye
+  Eye,
+  X,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 const CourseContent = () => {
@@ -20,7 +24,6 @@ const CourseContent = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddContent, setShowAddContent] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [contentForm, setContentForm] = useState({
     title: '',
     file: null
@@ -32,7 +35,7 @@ const CourseContent = () => {
 
   const fetchCourse = async () => {
     try {
-      const response = await api.get(`/api/courses/instructor/${user._id}`);
+      const response = await api.get('/api/courses/all');
       const foundCourse = response.data.find(c => c._id === courseId);
       
       // Check if user is the instructor of this course
@@ -44,6 +47,7 @@ const CourseContent = () => {
       setCourse(foundCourse);
     } catch (error) {
       console.error('Error fetching course:', error);
+      toast.error('Failed to load course details');
     } finally {
       setLoading(false);
     }
@@ -58,23 +62,45 @@ const CourseContent = () => {
   };
 
   const handleFileChange = (e) => {
-    setContentForm(prev => ({
-      ...prev,
-      file: e.target.files[0]
-    }));
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('video/')) {
+        toast.error('Please select a valid video file');
+        return;
+      }
+      
+      // Validate file size (100MB limit)
+      const maxSize = 100 * 1024 * 1024; // 100MB
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 100MB');
+        return;
+      }
+
+      setContentForm(prev => ({
+        ...prev,
+        file: file
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setUploading(true);
+
+    if (!contentForm.file) {
+      toast.error('Please select a video file to upload');
+      return;
+    }
+
+    if (!contentForm.title.trim()) {
+      toast.error('Please enter a video title');
+      return;
+    }
+
+    // Show loading toast
+    const uploadToast = toast.loading('Uploading video... This may take a few minutes.');
 
     try {
-      if (!contentForm.file) {
-        alert('Please select a video file to upload');
-        setUploading(false);
-        return;
-      }
-
       const formData = new FormData();
       formData.append('title', contentForm.title);
       formData.append('type', 'video');
@@ -84,19 +110,51 @@ const CourseContent = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 300000, // 5 minutes timeout for large files
       });
 
-      alert('Video uploaded successfully!');
+      // Dismiss loading toast and show success
+      toast.dismiss(uploadToast);
+      toast.success('Video uploaded successfully!');
+      
+      // Reset form and close modal
       setShowAddContent(false);
       setContentForm({
         title: '',
         file: null
       });
-      fetchCourse(); // Refresh course data
+      
+      // Refresh course data
+      fetchCourse();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to upload video');
-    } finally {
-      setUploading(false);
+      // Dismiss loading toast and show error
+      toast.dismiss(uploadToast);
+      
+      if (error.code === 'ECONNABORTED') {
+        toast.error('Upload timeout. Please try again with a smaller file.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to upload video');
+      }
+    }
+  };
+
+  const handleDeleteContent = async (contentIndex) => {
+    if (!window.confirm('Are you sure you want to delete this video?')) {
+      return;
+    }
+
+    const deleteToast = toast.loading('Deleting video...');
+
+    try {
+      // Note: You'll need to implement this endpoint in your backend
+      await api.delete(`/api/courses/${courseId}/content/${contentIndex}`);
+      
+      toast.dismiss(deleteToast);
+      toast.success('Video deleted successfully!');
+      fetchCourse();
+    } catch (error) {
+      toast.dismiss(deleteToast);
+      toast.error('Failed to delete video');
     }
   };
 
@@ -230,7 +288,10 @@ const CourseContent = () => {
                         <Edit className="h-4 w-4" />
                         <span>Edit</span>
                       </button>
-                      <button className="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200 transition-colors flex items-center space-x-1">
+                      <button 
+                        onClick={() => handleDeleteContent(index)}
+                        className="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200 transition-colors flex items-center space-x-1"
+                      >
                         <Trash2 className="h-4 w-4" />
                         <span>Delete</span>
                       </button>
@@ -247,8 +308,14 @@ const CourseContent = () => {
       {showAddContent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Upload New Video</h2>
+              <button
+                onClick={() => setShowAddContent(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -288,13 +355,35 @@ const CourseContent = () => {
                     Click to upload video
                   </label>
                   <p className="text-sm text-gray-500 mt-2">
-                    MP4, AVI, MOV, WMV files supported
+                    MP4, AVI, MOV, WMV files supported (Max: 100MB)
                   </p>
                   {contentForm.file && (
-                    <p className="text-sm text-green-600 mt-2">
-                      Selected: {contentForm.file.name}
-                    </p>
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-center space-x-2 text-green-700">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="text-sm font-medium">Selected: {contentForm.file.name}</span>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1">
+                        Size: {(contentForm.file.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
                   )}
+                </div>
+              </div>
+
+              {/* Upload Guidelines */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900 mb-1">Upload Guidelines</h4>
+                    <ul className="text-xs text-blue-800 space-y-1">
+                      <li>• Video files only (MP4, AVI, MOV, WMV)</li>
+                      <li>• Maximum file size: 100MB</li>
+                      <li>• Upload may take several minutes for large files</li>
+                      <li>• Don't close this window during upload</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 
@@ -308,11 +397,11 @@ const CourseContent = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={uploading}
+                  disabled={!contentForm.file || !contentForm.title.trim()}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                 >
                   <Upload className="h-5 w-5" />
-                  <span>{uploading ? 'Uploading...' : 'Upload Video'}</span>
+                  <span>Upload Video</span>
                 </button>
               </div>
             </form>

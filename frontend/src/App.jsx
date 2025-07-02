@@ -85,6 +85,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import Toast from './components/Toast';
 
 // Pages
 import Home from './pages/Home';
@@ -110,6 +111,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-gray-50">
           <Navbar />
+          <Toast />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />

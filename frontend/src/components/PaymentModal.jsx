@@ -49,7 +49,7 @@ const CheckoutForm = ({ course, onSuccess, onCancel }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    console.log('Submitting payment for course:', course.title);
     if (!stripe || !elements || !clientSecret) {
       return;
     }

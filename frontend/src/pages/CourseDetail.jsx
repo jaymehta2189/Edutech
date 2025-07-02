@@ -37,7 +37,9 @@ const CourseDetail = () => {
     try {
       const response = await api.get('/api/courses/all');
       const foundCourse = response.data.find(c => c._id === id);
+   
       setCourse(foundCourse);
+    
     } catch (error) {
       console.error('Error fetching course:', error);
     } finally {
@@ -109,6 +111,9 @@ const CourseDetail = () => {
       </div>
     );
   }
+    const isInstructor = user && (
+    course.instructor?._id === user._id
+  );
 
   const isEnrolled = course.students?.includes(user?._id);
   const isFree = course.price === 0;
@@ -250,6 +255,7 @@ const CourseDetail = () => {
           </div>
 
           {/* Sidebar */}
+          {!isInstructor && (
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
               <div className="text-center mb-6">
@@ -301,6 +307,7 @@ const CourseDetail = () => {
                     )}
                   </div>
                 )
+              
               ) : (
                 <button
                   onClick={() => navigate('/login')}
@@ -331,17 +338,9 @@ const CourseDetail = () => {
                   </li>
                 </ul>
               </div>
-
-              {!isFree && (
-                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center space-x-2 text-yellow-800">
-                    <ShoppingCart className="h-4 w-4" />
-                    <span className="text-sm font-medium">30-day money-back guarantee</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
